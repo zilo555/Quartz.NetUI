@@ -337,20 +337,17 @@ namespace Quartz.NET.Web.Extensions
                 {
                     case JobAction.删除:
                     case JobAction.修改:
+                    case JobAction.暂停:
                         await scheduler.PauseTrigger(trigger.Key);
                         await scheduler.UnscheduleJob(trigger.Key);// 移除触发器
                         await scheduler.DeleteJob(trigger.JobKey);
                         result = taskOptions.ModifyTaskEntity(schedulerFactory, action);
                         break;
-                    case JobAction.暂停:
+                
                     case JobAction.停止:
                     case JobAction.开启:
                         result = taskOptions.ModifyTaskEntity(schedulerFactory, action);
-                        if (action == JobAction.暂停)
-                        {
-                            await scheduler.PauseTrigger(trigger.Key);
-                        }
-                        else if (action == JobAction.开启)
+                        if (action == JobAction.开启)
                         {
                             await scheduler.ResumeTrigger(trigger.Key);
                             //   await scheduler.RescheduleJob(trigger.Key, trigger);
@@ -359,18 +356,6 @@ namespace Quartz.NET.Web.Extensions
                         {
                             await scheduler.Shutdown();
                         }
-                        break;
-                    case JobAction.立即执行:
-                        if (taskOptions != null && taskOptions.Status != (int)TriggerState.Normal)
-                        {
-                            result = taskOptions.ModifyTaskEntity(schedulerFactory, JobAction.开启);
-                             await scheduler.ResumeTrigger(trigger.Key);
-                        
-                        }
-                        else {
-                            await scheduler.TriggerJob(jobKey);
-                        }
-                    
                         break;
                 }
                 return result ?? new { status = true, msg = $"作业{action.ToString()}成功" };

@@ -2,6 +2,7 @@
 using System.Configuration;
 using System.IO;
 using System.Net;
+using System.Security.Policy;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading;
@@ -29,21 +30,26 @@ namespace Quartz.NET.WindowsService
             //默认1分钟调用一次
             int interval = 1;
             string message = "";
+            string[] urls = null;
             string url = "";
             while (true)
             {
                 try
                 {
                     ConfigurationManager.RefreshSection("appSettings");
-                    url = ConfigurationManager.AppSettings["url"];
+                    urls = ConfigurationManager.AppSettings["url"].ToString().Split(',');
                     interval = Convert.ToInt32(ConfigurationManager.AppSettings["interval"]);
 
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-                    using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                    foreach (var urlx in urls)
                     {
-                        Stream responseStream = response.GetResponseStream();
-                        StreamReader streamReader = new StreamReader(responseStream, Encoding.UTF8);
-                        message = streamReader.ReadToEnd();
+                        url = urlx;
+                        HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                        using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                        {
+                            Stream responseStream = response.GetResponseStream();
+                            StreamReader streamReader = new StreamReader(responseStream, Encoding.UTF8);
+                            message = streamReader.ReadToEnd();
+                        }
                     }
                 }
                 catch (Exception ex)
